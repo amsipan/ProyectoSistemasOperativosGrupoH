@@ -1,0 +1,8 @@
+Grupo F | Promedio: 20.01 | Reprobados: 1095857 | Aprobados (18-27.99): 610005 | Aprobados (28-40): 794138 | Tiempo: 0.020290 s
+Grupo G | Promedio: 20.00 | Reprobados: 1096896 | Aprobados (18-27.99): 610542 | Aprobados (28-40): 792562 | Tiempo: 0.017552 s
+Grupo E | Promedio: 20.00 | Reprobados: 1097318 | Aprobados (18-27.99): 609664 | Aprobados (28-40): 793018 | Tiempo: 0.059189 s
+Grupo H | Promedio: 20.01 | Reprobados: 1097071 | Aprobados (18-27.99): 609410 | Aprobados (28-40): 793519 | Tiempo: 0.016613 s
+Grupo C | Promedio: 20.00 | Reprobados: 1096838 | Aprobados (18-27.99): 610366 | Aprobados (28-40): 792796 | Tiempo: 0.057073 s
+Inicio: Sun Jun 15 20:28:08:950647303 2025
+Fin: Sun Jun 15 20:28:08:175487343 2025
+Duración total: 0.224840 segundos

@@ -1,0 +1,11 @@
+Grupo A | Promedio: 20.00 | Reprobados: 1096605 | Aprobados (18-27.99): 611746 | Aprobados (28-40): 791649 | Tiempo: 0.000663 s
+Grupo B | Promedio: 20.00 | Reprobados: 1097863 | Aprobados (18-27.99): 609574 | Aprobados (28-40): 792563 | Tiempo: 0.000699 s
+Grupo C | Promedio: 20.00 | Reprobados: 1096838 | Aprobados (18-27.99): 610366 | Aprobados (28-40): 792796 | Tiempo: 0.010752 s
+Grupo D | Promedio: 20.00 | Reprobados: 1097082 | Aprobados (18-27.99): 610854 | Aprobados (28-40): 792064 | Tiempo: 0.010649 s
+Grupo E | Promedio: 20.00 | Reprobados: 1097318 | Aprobados (18-27.99): 609664 | Aprobados (28-40): 793018 | Tiempo: 0.000951 s
+Grupo F | Promedio: 20.01 | Reprobados: 1095857 | Aprobados (18-27.99): 610005 | Aprobados (28-40): 794138 | Tiempo: 0.000681 s
+Grupo G | Promedio: 20.00 | Reprobados: 1096896 | Aprobados (18-27.99): 610542 | Aprobados (28-40): 792562 | Tiempo: 0.000654 s
+Grupo H | Promedio: 20.01 | Reprobados: 1097071 | Aprobados (18-27.99): 609410 | Aprobados (28-40): 793519 | Tiempo: 0.000638 s
+Inicio: Sun Jun 15 20:28:08:313157641 2025
+Fin: Sun Jun 15 20:28:08:327096915 2025
+Duración total: 0.013939 segundos
