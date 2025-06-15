@@ -1,12 +1,4 @@
-/* hilos_promedio.c – versión optimizada CON sincronización explícita
- * Calcula promedios sobre 20 000 000 de notas usando tantos hilos como
- * núcleos lógicos disponibles (‐pthreads). Cada hilo trabaja en su bloque,
- * guarda el resultado en una estructura privada y el hilo principal emite la
- * salida al final. Se usan mutex para proteger recursos compartidos.
- *
- * Compilación recomendada:
- *   gcc hilos.c -o hilos_promedio -O3 -march=native -flto -pthread -Wall
- */
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <pthread.h>
