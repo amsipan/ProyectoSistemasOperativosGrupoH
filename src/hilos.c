@@ -1,4 +1,3 @@
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <pthread.h>
@@ -119,7 +118,7 @@ int main(void)
         notas[i] = rand() % (MAX_NOTA + 1);
 
     pthread_t   *hilos = malloc(sizeof(pthread_t) * n_hilos); // Puntero a arreglo de hilos
-    dato_hilo     *dato_hilo = malloc(sizeof(dato_hilo)  * n_hilos); // Puntero a datos de cada hilo
+    dato_hilo     *dato_por_hilo = malloc(sizeof(dato_hilo)  * n_hilos); // Puntero a datos de cada hilo
     resultado_hilo *res   = calloc(n_hilos, sizeof(resultado_hilo)); // Puntero a resultados
 
     /* Medición de tiempo total */
@@ -131,15 +130,15 @@ int main(void)
     for (int i = 0; i < n_hilos; ++i) {
         long cant = notas_por_hilo + (i == n_hilos - 1 ? resto : 0); // Cantidad para este hilo
         // Inicializa la estructura de datos para el hilo
-        datos[i] = (dato_hilo){ .id = i, .notas = notas,
+        dato_por_hilo[i] = (dato_hilo){ .id = i, .notas = notas,
                               .inicio = idx, .cantidad = cant,
-                              .salida = &res[i] };
+                              .resultado = &res[i] };
         // pthread_create: crea un hilo
         // &hilos[i]: puntero al identificador del hilo
         // NULL: atributos por defecto
         // procesar: función que ejecuta el hilo
-        // &datos[i]: puntero a los datos del hilo
-        if (pthread_create(&hilos[i], NULL, procesar, &datos[i]) != 0) {
+        // &dato_por_hilo[i]: puntero a los datos del hilo
+        if (pthread_create(&hilos[i], NULL, procesar, &dato_por_hilo[i]) != 0) {
             perror("pthread_create");
             return EXIT_FAILURE;
         }
@@ -183,7 +182,7 @@ int main(void)
 
     free(notas);  // Libera memoria dinámica
     free(hilos);
-    free(datos);
+    free(dato_por_hilo);
     free(res);
     return EXIT_SUCCESS;
 }

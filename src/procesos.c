@@ -33,7 +33,7 @@ typedef struct {
  * r: puntero a la estructura resultado_por_grupo con los datos del grupo.
  * Si el archivo tiene 8 o más líneas, lo reescribe; si no, agrega al final.
  */
-static void escribir_resultado(const char *filename, const resultado_por_grupo *res)
+static void escribir_resultado(const char *filename, const resultado_por_grupo *resultado)
 {
     int rewrite = 0;
     // Solo reescribe si el archivo tiene más de 11 líneas
@@ -49,7 +49,7 @@ static void escribir_resultado(const char *filename, const resultado_por_grupo *
     if (archivo) {
         fprintf(archivo,
                 "Grupo %c | Promedio: %.2f | Reprobados: %d | Aprobados (18-27.99): %d | Aprobados (28-40): %d | Tiempo: %.6f s\n",
-                res->letra, res->promedio, res->reprobados, res->aprobado_bajo, res->aprobado_alto, res->tiempo);
+                resultado->letra, resultado->promedio, resultado->reprobados, resultado->aprobado_bajo, resultado->aprobado_alto, resultado->tiempo);
         fflush(archivo);
         fclose(archivo);
     }
@@ -120,7 +120,7 @@ int main(void)
             clock_gettime(CLOCK_MONOTONIC, &t1g); // Marca de tiempo final del grupo
             double tiempo = (t1g.tv_sec - t0g.tv_sec) + (t1g.tv_nsec - t0g.tv_nsec) / 1e9;
             // Llena la estructura resultado_por_grupo con los datos del grupo
-            resultado_por_grupo r = { .letra = 'A' + g,
+            resultado_por_grupo resultado = { .letra = 'A' + g,
                               .promedio = (double)suma / NOTAS_POR_GRUPO,
                               .reprobados = rep,
                               .aprobado_bajo = ab,
@@ -132,15 +132,15 @@ int main(void)
             resumen_global[0] += rep;
             resumen_global[1] += ab;
             resumen_global[2] += aa;
-            sem_post(sememaforo); // Libera el semáforo
+            sem_post(semaforo); // Libera el semáforo
 
             // Sección crítica: escribe el resultado del grupo en el archivo
-            sem_wait(sememaforo);
-            escribir_resultado("resultados_procesos.txt", &r);
-            sem_post(sememaforo);
+            sem_wait(semaforo);
+            escribir_resultado("resultados_procesos.txt", &resultado);
+            sem_post(semaforo);
 
             // Libera recursos antes de terminar el hijo
-            sem_close(sememaforo); // Cierra el semáforo
+            sem_close(semaforo); // Cierra el semáforo
             munmap(resumen_global, 3 * sizeof(int)); // Libera la memoria compartida
             close(memoria_compartida); // Cierra el descriptor de la memoria compartida
             free(notas); // Libera la memoria dinámica
