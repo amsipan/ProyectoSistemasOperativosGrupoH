@@ -16,7 +16,7 @@ typedef struct {
     int aprobado_bajo;    // Cantidad de aprobados bajos (18-27.99)
     int aprobado_alto;    // Cantidad de aprobados altos (28-40)
     double tiempo;        // Tiempo de ejecución del hilo en segundos
-} resultado_t;
+} resultado_hilo;
 
 /* Datos pasados al hilo */
 typedef struct {
@@ -24,8 +24,8 @@ typedef struct {
     int *notas;           // Puntero al arreglo global de notas
     long inicio;          // Índice inicial de notas a procesar
     long cantidad;        // Cuántas notas procesa este hilo
-    resultado_t *salida;  // Puntero a su celda resultado
-} tdata_t;
+    resultado_hilo *resultado;  // Puntero a su celda resultado
+} dato_hilo;
 
 // Arreglo global compartido para totales: [reprobados, aprobado_bajo, aprobado_alto]
 int resumen_global[3] = {0, 0, 0};
@@ -33,30 +33,30 @@ pthread_mutex_t resumen_mutex = PTHREAD_MUTEX_INITIALIZER;
 
 /*
  * Función que ejecuta cada hilo.
- * arg: puntero a tdata_t con los datos de trabajo y resultado.
+ * arg: puntero a dato_hilo con los datos de trabajo y resultado.
  * Calcula el promedio y clasificaciones, mide su tiempo y actualiza los totales globales.
  */
 static void *procesar(void *arg)
 {
-    tdata_t *d = (tdata_t *)arg; // Conversión de void* a tdata_t*
+    dato_hilo *info = (dato_hilo *)arg; // Conversión de void* a dato_hilo*
     struct timespec t0, t1;
     clock_gettime(CLOCK_MONOTONIC, &t0); // Marca de tiempo inicial del hilo
     long suma = 0;
     int rep = 0, ab = 0, aa = 0;
     // Procesa su bloque de notas
-    for (long i = d->inicio; i < d->inicio + d->cantidad; ++i) {
-        int n = d->notas[i];
+    for (long i = info->inicio; i < info->inicio + info->cantidad; ++i) {
+        int n = info->notas[i];
         suma += n;
         if (n < 18) rep++;
         else if (n < 28) ab++;
         else aa++;
     }
     clock_gettime(CLOCK_MONOTONIC, &t1); // Marca de tiempo final del hilo
-    d->salida->promedio       = (double)suma / d->cantidad;
-    d->salida->reprobados     = rep;
-    d->salida->aprobado_bajo  = ab;
-    d->salida->aprobado_alto  = aa;
-    d->salida->tiempo = (t1.tv_sec - t0.tv_sec) + (t1.tv_nsec - t0.tv_nsec) / 1e9;
+    info->resultado->promedio       = (double)suma / info->cantidad;
+    info->resultado->reprobados     = rep;
+    info->resultado->aprobado_bajo  = ab;
+    info->resultado->aprobado_alto  = aa;
+    info->resultado->tiempo = (t1.tv_sec - t0.tv_sec) + (t1.tv_nsec - t0.tv_nsec) / 1e9;
     // Sección crítica: actualiza los totales globales
     pthread_mutex_lock(&resumen_mutex);
     resumen_global[0] += rep;
@@ -72,21 +72,21 @@ static void *procesar(void *arg)
  * res: arreglo de resultados de cada hilo.
  * n_hilos: cantidad de hilos/grupos.
  */
-void mostrar_y_guardar_resultados(const char *filename, resultado_t *res, int n_hilos, double tiempo_total, time_t inicio, time_t fin, struct timespec t0, struct timespec t1) {
+void mostrar_y_guardar_resultados(const char *filename, resultado_hilo *res, int n_hilos, double tiempo_total, time_t inicio, time_t fin, struct timespec t0, struct timespec t1) {
     int rewrite = 0;
-    FILE *fcheck = fopen(filename, "r");
-    if (fcheck) {
+    FILE *revision = fopen(filename, "r");
+    if (revision) {
         int lines = 0;
         char buffer[256];
-        while (fgets(buffer, sizeof(buffer), fcheck)) lines++;
+        while (fgets(buffer, sizeof(buffer), revision)) lines++;
         if (lines > 12) rewrite = 1;
-        fclose(fcheck);
+        fclose(revision);
     }
-    FILE *out = fopen(filename, rewrite ? "w" : "a");
-    if (!out) { perror("fopen"); exit(EXIT_FAILURE); }
+    FILE *escritura = fopen(filename, rewrite ? "w" : "a");
+    if (!escritura) { perror("fopen"); exit(EXIT_FAILURE); }
     for (int i = 0; i < n_hilos; ++i) {
         char letra = 'A' + i;
-        fprintf(out,
+        fprintf(escritura,
                 "Grupo %c | Promedio: %.2f | Reprobados: %d | Aprobados (18-27.99): %d | Aprobados (28-40): %d | Tiempo: %.6f s\n",
                 letra, res[i].promedio, res[i].reprobados,
                 res[i].aprobado_bajo, res[i].aprobado_alto, res[i].tiempo);
@@ -95,11 +95,11 @@ void mostrar_y_guardar_resultados(const char *filename, resultado_t *res, int n_
     char buf_inicio[64], buf_fin[64];
     strftime(buf_inicio, sizeof(buf_inicio), "%a %b %d %H:%M:%S", localtime(&inicio));
     strftime(buf_fin, sizeof(buf_fin), "%a %b %d %H:%M:%S", localtime(&fin));
-    fprintf(out, "Inicio: %s:%09ld %d\n", buf_inicio, t0.tv_nsec, 1900 + localtime(&inicio)->tm_year);
-    fprintf(out, "Fin: %s:%09ld %d\n", buf_fin, t1.tv_nsec, 1900 + localtime(&fin)->tm_year);
-    fprintf(out, "Duración total: %.6f segundos\n", tiempo_total);
-    fflush(out);
-    fclose(out);
+    fprintf(escritura, "Inicio: %s:%09ld %d\n", buf_inicio, t0.tv_nsec, 1900 + localtime(&inicio)->tm_year);
+    fprintf(escritura, "Fin: %s:%09ld %d\n", buf_fin, t1.tv_nsec, 1900 + localtime(&fin)->tm_year);
+    fprintf(escritura, "Duración total: %.6f segundos\n", tiempo_total);
+    fflush(escritura);
+    fclose(escritura);
 }
 
 int main(void)
@@ -119,8 +119,8 @@ int main(void)
         notas[i] = rand() % (MAX_NOTA + 1);
 
     pthread_t   *hilos = malloc(sizeof(pthread_t) * n_hilos); // Puntero a arreglo de hilos
-    tdata_t     *datos = malloc(sizeof(tdata_t)  * n_hilos); // Puntero a datos de cada hilo
-    resultado_t *res   = calloc(n_hilos, sizeof(resultado_t)); // Puntero a resultados
+    dato_hilo     *dato_hilo = malloc(sizeof(dato_hilo)  * n_hilos); // Puntero a datos de cada hilo
+    resultado_hilo *res   = calloc(n_hilos, sizeof(resultado_hilo)); // Puntero a resultados
 
     /* Medición de tiempo total */
     struct timespec t0, t1;
@@ -131,7 +131,7 @@ int main(void)
     for (int i = 0; i < n_hilos; ++i) {
         long cant = notas_por_hilo + (i == n_hilos - 1 ? resto : 0); // Cantidad para este hilo
         // Inicializa la estructura de datos para el hilo
-        datos[i] = (tdata_t){ .id = i, .notas = notas,
+        datos[i] = (dato_hilo){ .id = i, .notas = notas,
                               .inicio = idx, .cantidad = cant,
                               .salida = &res[i] };
         // pthread_create: crea un hilo
@@ -152,21 +152,21 @@ int main(void)
 
     clock_gettime(CLOCK_MONOTONIC, &t1); // Marca de tiempo final
 
-    double dt = (t1.tv_sec - t0.tv_sec) + (t1.tv_nsec - t0.tv_nsec) / 1e9;
+    double duracion_total = (t1.tv_sec - t0.tv_sec) + (t1.tv_nsec - t0.tv_nsec) / 1e9;
     time_t tiempo_fin = time(NULL);
     // Escribe los resultados ANTES de leerlos para imprimir
-    mostrar_y_guardar_resultados("resultados_hilos.txt", res, n_hilos, dt, tiempo_inicio, tiempo_fin, t0, t1);
+    mostrar_y_guardar_resultados("resultados_hilos.txt", res, n_hilos, duracion_total, tiempo_inicio, tiempo_fin, t0, t1);
     printf("\n=== HILOS ===\n");
     // Imprime solo las primeras 8 líneas del archivo de resultados
-    FILE *out = fopen("resultados_hilos.txt", "r");
-    if (out) {
+    FILE *escritura = fopen("resultados_hilos.txt", "r");
+    if (escritura) {
         char line[256];
         int count = 0;
-        while (fgets(line, sizeof line, out) && count < 8) {
+        while (fgets(line, sizeof line, escritura) && count < 8) {
             printf("%s", line);
             count++;
         }
-        fclose(out);
+        fclose(escritura);
     }
     printf("\n=== Totales Globales (con mutex) ===\n");
     printf("Reprobados: %d\n", resumen_global[0]);
@@ -178,7 +178,7 @@ int main(void)
     strftime(buf_fin, sizeof(buf_fin), "%a %b %d %H:%M:%S", localtime(&tiempo_fin));
     printf("Inicio: %s:%09ld %d\n", buf_inicio, t0.tv_nsec, 1900 + localtime(&tiempo_inicio)->tm_year);
     printf("Fin: %s:%09ld %d\n", buf_fin, t1.tv_nsec, 1900 + localtime(&tiempo_fin)->tm_year);
-    printf("Duración total: %.6f segundos\n", dt);
+    printf("Duración total: %.6f segundos\n", duracion_total);
     pthread_mutex_destroy(&resumen_mutex); // Libera el mutex
 
     free(notas);  // Libera memoria dinámica
