@@ -157,6 +157,7 @@ int main(void)
     time_t tiempo_fin = time(NULL); // Marca de tiempo de fin
     escribir_tiempos_finales("resultados_procesos.txt", duracion_total, tiempo_inicio, tiempo_fin, t0, t1);
 
+    printf("\n=== PROCESOS ===\n")
     // Imprime solo las primeras 8 líneas del archivo de resultados
     FILE *out = fopen("resultados_hilos.txt", "r");
     if (out) {
